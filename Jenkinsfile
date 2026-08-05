@@ -20,7 +20,7 @@ pipeline {
 
         stage('Maven 编译打包') {
             steps {
-                bat 'mvn clean package -s D:\\tools\\maven\\settings\\settings-c.xml -DskipTests'
+                 bat 'mvn clean package -s D:\\tools\\maven\\settings\\settings-c.xml -DskipTests'
             }
         }
 
@@ -36,6 +36,7 @@ pipeline {
         stage('部署到 Kubernetes') {
             steps {
                 withKubeConfig([credentialsId: "${KUBE_CONFIG_CREDENTIALS_ID}"]) {
+                    // 使用 PowerShell 替换镜像标签（Windows 兼容）
                     powershell """
                         (Get-Content ${DEPLOY_FILE}) -replace 'image: .*', 'image: ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}' | Set-Content ${DEPLOY_FILE}
                     """
