@@ -1,36 +1,55 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'BRANCH', defaultValue: 'main', description: '代码分支')
-        string(name: 'ENV', defaultValue: 'test', description: '部署环境')
+    environment {
+        HARBOR_URL = '192.168.101.133:8091'
+        HARBOR_PROJECT = 'jenkins-project'
+        APP_NAME = 'springboot-demo'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        HARBOR_CREDENTIALS_ID = 'harbor-cred'
+        KUBE_CONFIG_CREDENTIALS_ID = 'kubeconfig'
+        DEPLOY_FILE = 'k8s-deployment.yaml'
     }
 
     stages {
         stage('拉取代码') {
             steps {
-                // 1. 从 Git 拉取指定分支的代码
-                git branch: "${params.BRANCH}", url: 'https://你的Git仓库地址.git'
+                git branch: 'main', url: 'https://github.com/lizehan-collab/jenkins-demo.git'
             }
         }
 
         stage('Maven 编译打包') {
             steps {
-                // 2. 执行 Maven 打包（跳过测试，加快速度）
-                sh 'mvn clean package -DskipTests'
+                bat 'mvn clean package -DskipTests'
             }
         }
 
-        stage('部署到服务器') {
+        stage('构建并推送 Docker 镜像到 Harbor') {
             steps {
-                // 3. 把生成的 jar 包传到目标服务器（假设是 Linux）
-                // 注意：这里的用户名、密码需要配置在 Jenkins 的凭据中
-                sh '''
-                    scp target/*.jar root@你的服务器IP:/app/my-app.jar
-                    ssh root@你的服务器IP "systemctl restart my-app"
-                '''
-                echo "部署完成！环境：${params.ENV}，分支：${params.BRANCH}"
+                withDockerRegistry([credentialsId: "${HARBOR_CREDENTIALS_ID}", url: "http://${HARBOR_URL}"]) {
+                    bat "docker build -t ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG} ."
+                    bat "docker push ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
+                }
             }
+        }
+
+        stage('部署到 Kubernetes') {
+            steps {
+                withKubeConfig([credentialsId: "${KUBE_CONFIG_CREDENTIALS_ID}"]) {
+                    // 使用 PowerShell 替换镜像标签（Windows 兼容）
+                    powershell """
+                        (Get-Content ${DEPLOY_FILE}) -replace 'image: .*', 'image: ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}' | Set-Content ${DEPLOY_FILE}
+                    """
+                    bat "kubectl apply -f ${DEPLOY_FILE}"
+                    bat "kubectl rollout status deployment/springboot-app"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished.'
         }
     }
 }
