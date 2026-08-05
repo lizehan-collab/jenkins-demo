@@ -1,0 +1,7 @@
+jenkins:
+  url: http://127.0.0.1:8080
+  username: lzh
+  api-token: 1120ed166cd4f8a4904c1ac097572d06d0
+
+server:
+  port: 8888
