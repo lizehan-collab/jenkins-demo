@@ -1,34 +1,53 @@
+# ============ ConfigMap：外部化 application.yml 配置 ============
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-demo-config
+  namespace: manage-paas
+data:
+  # 与 src/main/resources/application.yml 保持一致，环境变量覆盖 jar 内默认值
+  JENKINS_URL: "http://127.0.0.1:8080"
+  JENKINS_USERNAME: "lzh"
+  JENKINS_API_TOKEN: "1120ed166cd4f8a4904c1ac097572d06d0"
+  SERVER_PORT: "8888"
+  SPRING_APPLICATION_NAME: "jenkins-demo"
+---
+# ============ Deployment ============
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: springboot-app
+  name: jenkins-demo
   namespace: manage-paas
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: springboot-app
+      app: jenkins-demo
   template:
     metadata:
       labels:
-        app: springboot-app
+        app: jenkins-demo
     spec:
       containers:
-        - name: springboot-app
-          image: 192.168.0.175:8091/jenkins-project/springboot-demo:latest   # 会被动态替换
+        - name: jenkins-demo
+          image: 192.168.0.175:8091/jenkins-project/springboot-demo:latest   # 会被 Jenkinsfile 动态替换
           ports:
             - containerPort: 8888
+          envFrom:
+            - configMapRef:
+                name: jenkins-demo-config
 ---
+# ============ Service ============
 apiVersion: v1
 kind: Service
 metadata:
-  name: springboot-app-service
+  name: jenkins-demo-service
   namespace: manage-paas
 spec:
   selector:
-    app: springboot-app
+    app: jenkins-demo
   ports:
     - protocol: TCP
       port: 80
       targetPort: 8888
-  type: NodePort   # 如果是本地 kind 集群，使用 NodePort 方便访问
+  type: NodePort   # 本地 kind 集群使用 NodePort 方便访问
