@@ -29,7 +29,7 @@ pipeline {
                // 切换到 default 上下文
                bat 'docker context use default'
 
-               withDockerRegistry([credentialsId: "${HARBOR_CREDENTIALS_ID}", url: "http://${HARBOR_URL}"]) {
+               withDockerRegistry([credentialsId: "${HARBOR_CREDENTIALS_ID}", url: "https://${HARBOR_URL}"]) {
                    bat "docker build -t ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG} ."
                    bat "docker push ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
                }
