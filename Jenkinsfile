@@ -26,7 +26,7 @@ pipeline {
 
        stage('构建并推送 Docker 镜像到 Harbor') {
            steps {
-               // 切换到默认 Docker 上下文
+               // 切换到 default 上下文
                bat 'docker context use default'
 
                withDockerRegistry([credentialsId: "${HARBOR_CREDENTIALS_ID}", url: "http://${HARBOR_URL}"]) {
