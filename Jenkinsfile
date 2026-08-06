@@ -44,6 +44,7 @@ pipeline {
                         (Get-Content ${DEPLOY_FILE}) -replace 'image: .*', 'image: ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}' | Set-Content ${DEPLOY_FILE}
                     """
                     bat "kubectl apply -f ${DEPLOY_FILE}"
+                    bat "timeout /t 5"
                     bat "kubectl rollout status deployment/jenkins-demo"
                 }
             }
