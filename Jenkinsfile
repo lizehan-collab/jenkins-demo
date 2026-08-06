@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('拉取代码') {
             steps {
-                git branch: 'main', url: 'https://github.com/lizehan-collab/jenkins-demo.git'
+                git branch: 'main', url: 'https://v4.gh-proxy.org/https://github.com/lizehan-collab/jenkins-demo.git'
             }
         }
 
