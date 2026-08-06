@@ -8,7 +8,7 @@ pipeline {
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         HARBOR_CREDENTIALS_ID = 'harbor-cred'
         KUBE_CONFIG_CREDENTIALS_ID = 'kubeconfig'
-        DEPLOY_FILE = 'k8s/deployment.yaml'
+        DEPLOY_FILE = 'k8s-deployment.yaml'
     }
 
     stages {
