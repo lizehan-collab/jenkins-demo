@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        HARBOR_URL = '192.168.101.133:8091'
+        HARBOR_URL = '192.168.0.175:8091'
         HARBOR_PROJECT = 'jenkins-project'
         APP_NAME = 'springboot-demo'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
@@ -24,14 +24,17 @@ pipeline {
             }
         }
 
-        stage('构建并推送 Docker 镜像到 Harbor') {
-            steps {
-                withDockerRegistry([credentialsId: "${HARBOR_CREDENTIALS_ID}", url: "http://${HARBOR_URL}"]) {
-                    bat "docker build -t ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG} ."
-                    bat "docker push ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
-                }
-            }
-        }
+       stage('构建并推送 Docker 镜像到 Harbor') {
+           steps {
+               // 切换到默认 Docker 上下文
+               bat 'docker context use default'
+
+               withDockerRegistry([credentialsId: "${HARBOR_CREDENTIALS_ID}", url: "http://${HARBOR_URL}"]) {
+                   bat "docker build -t ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG} ."
+                   bat "docker push ${HARBOR_URL}/${HARBOR_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
+               }
+           }
+       }
 
         stage('部署到 Kubernetes') {
             steps {
